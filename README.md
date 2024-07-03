@@ -1,0 +1,146 @@
+# פרויקט סוף מודול Node.JS
+
+- את מרבית הקוד כתבנו בליווי המרצה אלרן לאורך החודשיים האחרונים במהלך השיעורים.
+- מצורף קובץ הדרישות לפרויקט ובמהלך קובץ זה אפרט את הדרישות ואת השינויים שביצעתי עד לסיום הפרויקט הנוכחי - פרויקט סיכום צד שרת קורס פולסטאק
+
+
+## טכנולוגיות בשימוש
+לצורך בניית פרויקט זה השתמשתי במגוון ספריות מבית NPM והן לפי דרישות המטלה.
+
+
+| library | use |
+| ------ | ------ |
+| Express.JS | ספרייה לניהול בקשות HTTP |
+| BCryptjs | הצפנת טקסט בדרך מקובלת |
+| Joi | ולידציה של קלט בשרת מהמשתמש |
+| JsonWebToken | שיטה להעברת מידע בצורה מאובטחת|
+| Config |  |
+| Morgan | LOGGER אשר ידפיס את כל הבקשות הנשלחות לשרת |
+| Cors | על מנת למנוע חיבור לשליטה מפרונט שיושב על אותו המחשב בו יושב השרת |
+| Mongoose | ממשק API לניהול מסד נתונים של MongoDB |
+| Chalk* | לצורך צביעת הדפסות קריטיות לקונסול לצורך נוחות וסימון |
+|||
+
+*ירדה החובה להשתמש בספרייה
+
+## הפעלה ראשונית
+
+ראשית עלינו להתקין את את כל תיקיית package.json
+
+```sh
+npm i
+```
+לאחר מכן לפתוח את האטלס של MongoDB ולזרוע בו את מבני הנתונים הבסיסיים מקובץ seed.js ו-data.js
+```sh
+node seed.js
+```
+ולבסוף יש להריץ את הפרויקט ע"י קריאה לשרת
+```sh
+nodemon
+```
+
+## שימוש בפונקציות CRUD
+להלן פירוט המימושים של פעולות הCRUD לפי המשתמשים והכרטיסיות.
+
+### USERS:
+בוצע מימוש לכל פעולות היצירה, קריאה, עדכון ומחיקה
+<Br>
+עיקריי המשימות:
+<Br>
+Users PATCH - שינוי המפתח isBusiness
+
+- usersRouter:
+```sh
+router.patch('/:id', mustLogin, allowedRoles(['admin']), toggleIsBusiness)
+```
+
+- usersSchemas:
+```sh
+changeIsBusinessToggle:
+    Joi.object().keys({
+      isBusiness: Joi.boolean().required()
+    }).options(validationOptions),
+```
+
+- userControllers:
+```sh
+    const { error, value } = schemas.changeIsBusinessToggle.validate(req.body);
+```
+המתודה תשנה אך ורק את המפתח isBusiness ולא שם מפתח אחר
+
+### CARDS:
+בוצע מימוש לכל פעולות היצירה, קריאה, עדכון ומחיקה
+<Br>
+עיקריי המשימות:
+<Br>
+Cards PATCH - ביצוע לייק לכרטיסייה והסרה במידה ובוצע קודם לכן
+- usersRouter:
+```sh
+router.patch('/:cardId', mustLogin, likeCard) 
+```
+- cardsSchemas:
+```sh
+updateCard:
+  Joi.object().keys({
+    ...
+      likes: Joi.object({
+        userId: Joi.string().required()
+      })
+  })...
+```
+
+  - cardsControllrs:
+  ```sh
+  const likeCard = async (req, res) => {
+  try {
+
+    const { cardId } = req.params;
+    const { id } = req.user;
+
+    const card = await Card.findById(cardId);
+
+    const userIndex = card.likes.indexOf(id);
+    if (userIndex === -1) {
+      card.likes.push(id);
+    } else {
+      card.likes.splice(userIndex, 1);
+    }
+
+    await card.save();
+    res.status(200).send(card);
+  } catch (error) {
+    res.status(500).send(error.message);
+  }
+}
+```
+המתודה תוסיף את ה-ID של המשתמש למערך הלייקים של הכרטיסייה, לחיצה נוספת תסיר את הלייק
+
+## שאלות בונוס
+### BizNumber
+שינוי מספר עסק שמבוצע אך ורק ע"י משתמש מסוג admin
+
+- cardsRoutes.js
+```sh
+router.patch('/biz/:cardId', mustLogin, allowedRoles(["admin"]), changeBizNumber)
+```
+- cardsControllers
+```sh
+const existingCard = await Card.findOne({ bizNumber });
+    if (existingCard) {
+      return res.status(400).json({ message: 'BizNumber already in use' });
+    }
+
+    // update new biz number
+    const card = await Card.findByIdAndUpdate(cardId, { bizNumber }, { new: true });
+    if (!card) {
+      return res.status(404).json({ message: 'Card not found' });
+    }
+
+    res.status(200).json({success: true, "fixed card": card});
+```
+
+# סוף דבר
+הפרויקט הנוכחי היה לי מלמד מאוד ונהנתי מכל רגע, באמת, לא ריאלי, אבל נהנתי
+אני אמשיך לפתח אותו עד לתאריך ההגשה הסופי וממנו אגזור את צד השרת לפרויקט סוף הקורס
+
+תודה על השלד היציב של הפרויקט שממנו רק אפשר היה לפתח ((:
