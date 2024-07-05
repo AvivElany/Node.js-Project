@@ -19,13 +19,20 @@
 | Cors | על מנת למנוע חיבור לשליטה מפרונט שיושב על אותו המחשב בו יושב השרת |
 | Mongoose | ממשק API לניהול מסד נתונים של MongoDB |
 | Chalk* | לצורך צביעת הדפסות קריטיות לקונסול לצורך נוחות וסימון |
-|||
+| nodemon | מאפשר לנו לאתחל את שרת node.js שלנו בכל שינוי מתבצע בקובץ|
+<HR>
+
+### להתקנה:
+
+```
+npm i express bcryptjs joi jsonwebtoken config morgan cors mongoose chalk nodemon
+```
 
 *ירדה החובה להשתמש בספרייה
 
 ## הפעלה ראשונית
 
-ראשית עלינו להתקין את את כל תיקיית package.json
+ראשית עלינו להתקין ו/או לעדכן את את כל תיקיית package.json
 
 ```sh
 npm i
@@ -64,9 +71,12 @@ changeIsBusinessToggle:
 
 - userControllers:
 ```sh
-    const { error, value } = schemas.changeIsBusinessToggle.validate(req.body);
+const { error, value } = schemas.changeIsBusinessToggle.validate(req.body);
 ```
 המתודה תשנה אך ורק את המפתח isBusiness ולא שם מפתח אחר
+<HR>
+מתודות POST שהן רישום משתמש חדש והתחברות נכתבו תחת נתיב auth ולא
+<HR>
 
 ### CARDS:
 בוצע מימוש לכל פעולות היצירה, קריאה, עדכון ומחיקה
@@ -115,9 +125,58 @@ updateCard:
 ```
 המתודה תוסיף את ה-ID של המשתמש למערך הלייקים של הכרטיסייה, לחיצה נוספת תסיר את הלייק
 
+### Auth:
+
+קיים נתיב בשם auth וקובף controlles המכיר פונקציות נצרכות לשם בדיקה אם משתמש מחובר או את זהות המשתמש אם אדמין, ביזנס או המשתמש עצמו לצורך פעולות לפי הדרישה של הוראות הפרויקט
+
+- mustLogin
+```sh
+const mustLogin = (req,res,next) => {
+  
+  const token = req.header('x-auth-token')
+  if (!token) return res.status(403).json({ sucees: false, message: 'Forbidden: you must be logged-in to view this content' })
+  try {
+    const payload = jwt.verify(token, JWT_SECRET)
+    req.user = payload;
+    return next();
+  } catch(err) {
+    return res.status(403).json({ sucees: false, message: 'Forbidden: you must be logged-in to view this content' })
+  }
+}
+```
+
+- allowedRoles
+```sh
+const allowedRoles = (allowedRoles) => {
+  return (req,res,next) => {
+    const { isBusiness, isAdmin } = req.user;
+
+    // check agains allowedRoles
+    if (allowedRoles.includes('admin') && isAdmin) hasRole=true;
+    if (allowedRoles.includes('business') && isBusiness) hasRole=true;
+    if (allowedRoles.includes('ownUser') && jwt.decode(req.header('x-auth-token')).id === req.params.id) hasRole = true;
+
+    // user does not meet the required roles
+    if (!hasRole) {
+      const allowedRolesString = allowedRoles.join('/')
+      return res.status(401).json({ success: false, message: `Unauthorized: only ${allowedRolesString} users can access this resource` })
+    }
+
+    // allowed !
+    return next();
+  }
+}
+```
+- דוגמא לשימוש בפונקציות הללו
+```sh
+router.get('/:flavor', mustLogin, allowedRoles(["admin", "ownUser"]), getIceCream)
+```
+
 ## שאלות בונוס
 ### BizNumber
 שינוי מספר עסק שמבוצע אך ורק ע"י משתמש מסוג admin
+<br>
+ובתנאי שמספר העסק פנוי
 
 - cardsRoutes.js
 ```sh

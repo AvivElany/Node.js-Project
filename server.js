@@ -7,6 +7,7 @@ const morgan = require('morgan');
 const express = require('express');
 const connectDB = require('./config/db');
 
+
 // Initialize express
 const app = express();
 

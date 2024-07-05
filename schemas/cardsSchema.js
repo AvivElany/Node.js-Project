@@ -55,14 +55,7 @@ const schemas = {
         userId: Joi.string().required()
       })
   }).options(validationOptions).min(1).message("The request's body must include at-least one valid key"),
-  
-  searchCard: Joi.object().keys({
-    searchTerm: Joi.string().min(3).max(30).required(),
-    searchFields: Joi.array()
-      .items(Joi.string().valid("title", "subtitle", "description"))  // Important! allow to search only these fields. This way we can prevent search in "private" fields
-      .min(1)
-      .required(),
-  }).options(validationOptions),
+
 }
 
 module.exports = schemas;

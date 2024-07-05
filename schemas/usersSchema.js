@@ -34,8 +34,8 @@ const schemas = {
   
   updateUser:
     Joi.object().keys({
-      phone: Joi.string().pattern(/^05\d{1}([-]{0,1})\d{7}$/, { name: 'cellphone number'}).optional(),
-      // password rules: at least one upper case letter, at least one lower case letter, at least one number, at least one special characted, at least 7 characters total
+      phone: Joi.string().pattern(/^05\d{1}([-]{0,1})\d{7}$/, { name: 'cellphone number' }).optional(),
+      email: Joi.string().email().optional(), //ניתנת האפשרות למשתמש להחליף את המייל של עצמו
       password: Joi.string().pattern(/^(?=.*?[A-Z])(?=.*?[a-z])(?=.*?[0-9])(?=.*?[#?!@$ %^&*-]).{7,}$/, { name: 'password'}).optional(),
       image: Joi.object().keys({
         url: Joi.string().uri().optional(),
@@ -49,8 +49,8 @@ const schemas = {
         houseNumber: Joi.number().optional(),
         zip: Joi.string().optional(),
       }),
-      isBusiness: Joi.boolean().required(),
-      isAdmin: Joi.boolean().required(),
+      isBusiness: Joi.boolean().optional(),
+      isAdmin: Joi.boolean().optional(),
     }).options(validationOptions).min(1).message("The request's body must include at-least one valid key"),
   
   changeIsBusinessToggle:
@@ -61,7 +61,9 @@ const schemas = {
   login:
     Joi.object().keys({
       email: Joi.string().email().required(),
-      password: Joi.string().pattern(/^(?=.*?[A-Z])(?=.*?[a-z])(?=.*?[0-9])(?=.*?[#?!@$ %^&*-]).{7,}$/, { name: 'password'}).required(),
+      password: Joi.string().pattern(/^(?=.*?[A-Z])(?=.*?[a-z])(?=.*?[0-9])(?=.*?[#?!@$ %^&*-]).{7,}$/, { name: 'password' }).required(),
+      loginAttempts: Joi.number().integer().default(0).optional(),
+      lockUntil: Joi.date().optional()
     }).options(validationOptions),
 }
 
